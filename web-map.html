@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scotland Web Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <style>
+        #map {
+            height: 500px;
+        }
+
+        .cluster-icon {
+            background-image: url('https://raw.githubusercontent.com/two3four/SC-web-map105/main/pp.png');
+            background-size: cover;
+            width: 32px;
+            height: 32px;
+            line-height: 32px;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .popup-container {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .popup-title {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .popup-content {
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script>
+        var map = L.map('map').setView([56.4907, -4.2026], 6);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Load the GeoJSON data (replace with the actual path to your GeoJSON file)
+        fetch('https://raw.githubusercontent.com/two3four/SC-web-map105/main/points.geojson')
+            .then(response => response.json())
+            .then(data => {
+                var markers = L.markerClusterGroup({
+                    iconCreateFunction: function(cluster) {
+                        var childCount = cluster.getChildCount();
+                        return L.divIcon({
+                            html: '<div class="cluster-icon">' + childCount + '</div>',
+                            className: 'cluster',
+                            iconSize: L.point(28, 28)
+                        });
+                    }
+                });
+
+                L.geoJSON(data, {
+                    pointToLayer: function(feature, latlng) {
+                        var numberOfDentists = feature.properties['Number of Dentists'];
+                        var iconSize = [20 + numberOfDentists*3, 25 + numberOfDentists*3];
+                        var customIcon = L.icon({
+                            iconUrl: 'https://raw.githubusercontent.com/two3four/SC-web-map105/main/pp.png',
+                            iconSize: iconSize,
+                            iconAnchor: [iconSize[0] / 4, iconSize[2]],
+                            popupAnchor: [0, -iconSize[1]]
+                        });
+
+                        var popupContent = `
+                            <div class="popup-container">
+                                <div class="popup-title">${feature.properties.Name}</div>
+                                <div class="popup-content">Number of Dentists: ${feature.properties['Number of Dentists']}</div>
+                            </div>
+                        `;
+
+                        var popupOptions = {
+                            closeButton: false,
+                            minWidth: 150
+                        };
+
+                        return L.marker(latlng, { icon: customIcon }).bindPopup(popupContent, popupOptions);
+                    }
+                }).addTo(markers);
+
+                map.addLayer(markers);
+            });
+
+        // Initialize Leaflet.draw for measuring distances
+        var drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+
+        var drawControl = new L.Control.Draw({
+            edit: {
+                featureGroup: drawnItems
+            },
+            draw: {
+                polyline: {
+                    shapeOptions: {
+                        color: 'blue'
+                    },
+                    metric: true
+                },
+                polygon: false,
+                circle: false,
+                rectangle: false,
+                marker: false
+            }
+        });
+        map.addControl(drawControl);
+
+        map.on('draw:created', function(event) {
+            var layer = event.layer;
+            drawnItems.addLayer(layer);
+        });
+    </script>
+</body>
+</html>
