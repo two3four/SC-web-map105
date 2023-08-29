@@ -8,8 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
     <style>
         #map {
-             height: 100vh; /* Adjust the height as needed */
-            
+            height: 100vh; /* Set the map container height to 100% of the viewport height */
         }
 
         .cluster-icon {
@@ -75,7 +74,7 @@
                 L.geoJSON(data, {
                     pointToLayer: function(feature, latlng) {
                         var numberOfDentists = feature.properties['Number of Dentists'];
-                        var iconSize = [20 + numberOfDentists*3, 25 + numberOfDentists*3];
+                        var iconSize = [20 + numberOfDentists*2, 25 + numberOfDentists*2];
                         var customIcon = L.icon({
                             iconUrl: 'https://raw.githubusercontent.com/two3four/SC-web-map105/main/pp.png',
                             iconSize: iconSize,
